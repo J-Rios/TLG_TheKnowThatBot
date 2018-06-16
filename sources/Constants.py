@@ -11,7 +11,7 @@ Creation date:
 Last modified date:
     16/06/2017
 Version:
-    0.5.0
+    1.0.0
 '''
 
 ####################################################################################################
@@ -26,7 +26,7 @@ CONST = {
     'T_DEL_MSG' : 5, # Time (in mins) to remove self-destruct sent messages from the Bot
     'DEVELOPER' : '@JoseTLG', # Bot developer
     'REPOSITORY' : 'https://github.com/J-Rios/TLG_TheKnowThatBot', # Bot code repository
-    'VERSION' : '0.5.0' # Bot version
+    'VERSION' : '1.0.0' # Bot version
 }
 
 TEXT = {

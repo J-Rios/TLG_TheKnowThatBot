@@ -12,7 +12,7 @@ Creation date:
 Last modified date:
     16/06/2017
 Version:
-    0.5.0
+    1.0.0
 '''
 
 ####################################################################################################
@@ -143,6 +143,19 @@ def user_is_admin(bot, user_id, chat_id):
         return None
     for admin in group_admins:
         if user_id == admin.user.id:
+            return True
+    return False
+
+
+def bot_is_admin(bot, chat_id):
+    '''Check if the Bot is Admin of the actual group'''
+    try:
+        bot_id = bot.id
+        group_admins = bot.get_chat_administrators(chat_id)
+    except:
+        return None
+    for admin in group_admins:
+        if bot_id == admin.user.id:
             return True
     return False
 
