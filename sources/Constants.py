@@ -7,11 +7,11 @@ Description:
 Author:
     Jose Rios Rubio
 Creation date:
-    16/06/2017
+    16/06/2018
 Last modified date:
-    16/06/2017
+    01/07/2018
 Version:
-    1.0.0
+    1.1.0
 '''
 
 ####################################################################################################
@@ -26,34 +26,48 @@ CONST = {
     'T_DEL_MSG' : 5, # Time (in mins) to remove self-destruct sent messages from the Bot
     'DEVELOPER' : '@JoseTLG', # Bot developer
     'REPOSITORY' : 'https://github.com/J-Rios/TLG_TheKnowThatBot', # Bot code repository
-    'VERSION' : '1.0.0' # Bot version
+    'DEV_PAYPAL' : 'https://www.paypal.me/josrios', # Developer Paypal address
+    'DEV_BTC' : '3N9wf3FunR6YNXonquBeWammaBZVzTXTyR', # Developer Bitcoin address
+    'VERSION' : '1.1.0', # Bot version
+    'ISO_LANG_CODES' : ['en', 'es', 'de', 'fr', 'it', 'pt', 'ru', 'hi', 'ja', 'zh'] # ISO lang codes
 }
 
 TEXT = {
     'en' : {
         'START' : \
             'I am a Bot that know everything (ok, just kidding, but I know a lot). You can ' \
-            'request some of my acknoledge of anything using the command /know and I will ' \
-            'response you with a short and accurate answer about that stuff. Check /help command ' \
-            'for information about how I work.',
+            'request some of my acknoledge from anything through an Inline request or using the ' \
+            'command /know (or knowall), and I will response you with a short and accurate ' \
+            'answer about that stuff. Check /help command for information about how I work.',
 
         'HELP' : \
             'Bot help:\n' \
             '————————————————\n' \
             '- How I really work? When you request some info, I search and response with the ' \
-            'most fiable Wikipedia result of that stuff.\n' \
+            'most fiable Wikipedia results of that stuff.\n' \
             '\n' \
-            '- You can request some info with the commands /know /knowall following with a ' \
-            'topic/stuff.\n' \
-            'Example: /know telegram\n' \
+            '- You can talk to me in private, add me to some group, or send me an inline ' \
+            'request from anywhere.\n' \
             '\n' \
-            '- You can change the language that I speak (and Wikipedia searchs responses ' \
+            '- You can request a short info with the command /know following with a ' \
+            'topic/stuff. If you want a more complete info response, use the command /knowall.\n' \
+            'Example:\n/know telegram\n/knowall telegram\n' \
+            '\n' \
+            '- You can change the language that I speak in a chat (Wikipedia searchs responses ' \
             'language), using the command /language.\n' \
             '\n' \
             '- You can enable or disable my functionality using /enable and /disable commands.\n' \
             '\n' \
-            '- Language configuration and enable/disable commands just can be used by group ' \
-            'Administrators.\n' \
+            '- Language configuration and enable/disable commands just can be used in groups ' \
+            'and just from Administrators.\n' \
+            '\n' \
+            '- You can request some info through an Inline request, just type my alias following ' \
+            'the topic/stuff that you want to know.\n' \
+            '\n' \
+            '- You can request a long response and/or specify language in Inline queries, using ' \
+            'the -all and -language_code (-en, -es, -fr, -it...) flags before the topic/stuff to ' \
+            'know.\n' \
+            'Example:\n@tknowbot -all -es telegram\n@tknowbot -all -en telegram\n'
             '\n' \
             '- To preserve a clean group, I auto-remove messages related to me, after {} minutes ' \
             '(except /know commands and knowledge responses).\n' \
@@ -105,7 +119,8 @@ TEXT = {
 
         'ABOUT_MSG' : \
             'This is an open-source GNU-GPL licensed Bot developed by the telegram user {}. You ' \
-            'can check the code here:\n{}',
+            'can check the code here:\n{}\n\n-----------------------------------------------\n\n' \
+            'Do you like my work? Buy me a coffee.\n\nPaypal:\n{}\n\nBTC:\n{}',
 
         'KNOW_RESPONSE' : \
             '{}\n————————————————\n{}',
@@ -225,7 +240,9 @@ TEXT = {
 
         'ABOUT_MSG' : \
             'Este es un Bot open-source con licencia GNU-GPL, desarrollado por el usuario de ' \
-            'telegram {}. Puedes consultar el código aquí:\n{}',
+            'telegram {}. Puedes consultar el código aquí:\n{}\n\n' \
+            '-----------------------------------------------\n\nTe gusta lo que hago? ' \
+            'Invítame a un café.\n\nPaypal:\n{}\n\nBTC:\n{}',
 
         'KNOW_RESPONSE' : \
             '{}\n————————————————\n{}',

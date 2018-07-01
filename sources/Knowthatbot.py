@@ -8,18 +8,17 @@ Description:
 Author:
     Jose Rios Rubio
 Creation date:
-    16/06/2017
+    16/06/2018
 Last modified date:
-    16/06/2017
+    01/07/2018
 Version:
-    1.0.0
+    1.1.0
 '''
 
 ####################################################################################################
 
 ### Imported modules ###
 import wikipedia
-
 from Constants import CONST, TEXT
 from TSjson import TSjson
 from sys import exit
@@ -30,9 +29,9 @@ from time import time, sleep, strptime, mktime
 from threading import Lock
 from operator import itemgetter
 from collections import OrderedDict
-from telegram import MessageEntity, ParseMode, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, RegexHandler, \
-                         ConversationHandler, CallbackQueryHandler
+from uuid import uuid4
+from telegram import ParseMode, InlineQueryResultArticle, InputTextMessageContent
+from telegram.ext import Updater, CommandHandler, InlineQueryHandler
 
 ####################################################################################################
 
@@ -368,7 +367,8 @@ def cmd_about(bot, update):
     chat_id = update.message.chat_id
     chat_type = update.message.chat.type
     lang = get_chat_config(chat_id, 'Language')
-    bot_msg = TEXT[lang]['ABOUT_MSG'].format(CONST['DEVELOPER'], CONST['REPOSITORY'])
+    bot_msg = TEXT[lang]['ABOUT_MSG'].format(CONST['DEVELOPER'], CONST['REPOSITORY'], \
+        CONST['DEV_PAYPAL'], CONST['DEV_BTC'])
     if chat_type == "private":
         bot.send_message(chat_id, bot_msg)
     else:
@@ -382,6 +382,7 @@ def cmd_know(bot, update, args):
     chat_type = update.message.chat.type
     enable = get_chat_config(chat_id, 'Enable')
     lang = get_chat_config(chat_id, 'Language')
+    wiki_lang = lang
     if enable:
         search_for = ""
         if len(args) > 0:
@@ -390,18 +391,25 @@ def cmd_know(bot, update, args):
                 if not first_term:
                     search_for = "{} {}".format(search_for, arg)
                 else:
-                    search_for = arg
-                    first_term = False
-            wikipedia.set_lang(lang)
+                    if arg[0] == '-':
+                        if arg[1:] in CONST['ISO_LANG_CODES']:
+                            wiki_lang = arg[1:]
+                        else:
+                            search_for = arg
+                            first_term = False
+                    else:
+                        search_for = arg
+                        first_term = False
+            wikipedia.set_lang(wiki_lang)
             try:
                 wiki = wikipedia.page(search_for)
-                search_for_hlink = "[{}]({})".format(wiki.title, wiki.url)
+                search_for_hlink = "<a href=\"{}\">{}</a>".format(wiki.url, wiki.title)
                 summary_short = "{}.".format(wiki.summary.partition('.')[0])
                 bot_response = TEXT[lang]['KNOW_RESPONSE'].format(search_for_hlink, summary_short)
             except Exception as e:
                 bot_response = TEXT[lang]['KNOW_RESPONSE'].format(search_for, 
                                TEXT[lang]['KNOW_RESPONSE_NO_INFO'])
-            bot.send_message(chat_id, bot_response, parse_mode=ParseMode.MARKDOWN)
+            bot.send_message(chat_id, bot_response, parse_mode=ParseMode.HTML)
         else:
             bot.send_message(chat_id, TEXT[lang]['KNOW_RESPONSE_NO_ARG'])
 
@@ -412,6 +420,7 @@ def cmd_knowall(bot, update, args):
     chat_type = update.message.chat.type
     enable = get_chat_config(chat_id, 'Enable')
     lang = get_chat_config(chat_id, 'Language')
+    wiki_lang = lang
     if enable:
         search_for = ""
         if len(args) > 0:
@@ -420,19 +429,114 @@ def cmd_knowall(bot, update, args):
                 if not first_term:
                     search_for = "{} {}".format(search_for, arg)
                 else:
-                    search_for = arg
-                    first_term = False
-            wikipedia.set_lang(lang)
+                    if arg[0] == '-':
+                        if arg[1:] in CONST['ISO_LANG_CODES']:
+                            wiki_lang = arg[1:]
+                        else:
+                            search_for = arg
+                            first_term = False
+                    else:
+                        search_for = arg
+                        first_term = False
+            wikipedia.set_lang(wiki_lang)
             try:
                 wiki = wikipedia.page(search_for)
-                search_for_hlink = "[{}]({})".format(wiki.title, wiki.url)
+                search_for_hlink = "<a href=\"{}\">{}</a>".format(wiki.url, wiki.title)
                 bot_response = TEXT[lang]['KNOW_RESPONSE'].format(search_for_hlink, wiki.summary)
             except Exception as e:
                 bot_response = TEXT[lang]['KNOW_RESPONSE'].format(search_for, 
                                TEXT[lang]['KNOW_RESPONSE_NO_INFO'])
-            bot.send_message(chat_id, bot_response, parse_mode=ParseMode.MARKDOWN)
+            bot.send_message(chat_id, bot_response, parse_mode=ParseMode.HTML)
         else:
             bot.send_message(chat_id, TEXT[lang]['KNOW_ALL_RESPONSE_NO_ARG'])
+
+####################################################################################################
+
+def inlinequery(bot, update):
+    """Handle the inline query"""
+    chat_id = update.inline_query.id
+    all_summary = False
+    lang = "en"
+    wiki_lang = lang
+    results = []
+    results.clear()
+    query = update.inline_query.query
+    query_words = query.split(' ')
+    if len(query_words) > 1:
+        # Check if first word is for all summary search
+        if(query_words[0] == "-all"):
+            all_summary = True
+            if query_words[1][0] == '-':
+                if query_words[1][1:] in CONST['ISO_LANG_CODES']:
+                    wiki_lang = query_words[1][1:]
+                    query = query[9:]
+                else:
+                    if query_words[0][0] == '-':
+                        article_result = InlineQueryResultArticle(
+                            id=uuid4(),
+                            title="Invalid or not supported language",
+                            input_message_content=InputTextMessageContent(
+                                "Invalid or not supported language"
+                            )
+                        )
+                        results.append(article_result)
+                        update.inline_query.answer(results)
+                        query = ""
+                    else:
+                        query = query[5:]
+        else:
+            # Check if first word is for language search ("/en", "/es")
+            if query_words[0][0] == '-':
+                if query_words[0][1:] in CONST['ISO_LANG_CODES']:
+                    wiki_lang = query_words[0][1:]
+                    if(query_words[1] == "-all"):
+                        all_summary = True
+                        query = query[9:]
+                    else:
+                        query = query[4:]
+                else:
+                    if query_words[0][0] == '-':
+                        article_result = InlineQueryResultArticle(
+                            id=uuid4(),
+                            title="Invalid or not supported language",
+                            input_message_content=InputTextMessageContent(
+                                "Invalid or not supported language"
+                            )
+                        )
+                        results.append(article_result)
+                        update.inline_query.answer(results)
+                        query = ""
+    if query:
+        try:
+            wikipedia.set_lang(wiki_lang)
+            wiki_search = wikipedia.search(query, results=3)
+            for search_result in wiki_search:
+                wiki = wikipedia.page(search_result)
+                result_hlink = "<a href=\"{}\">{}</a>".format(wiki.url, wiki.title)
+                if all_summary:
+                    result_summary_short = wiki.summary
+                else:
+                    result_summary_short = "{}.".format(wiki.summary.partition('.')[0])
+                response = TEXT[lang]['KNOW_RESPONSE'].format(result_hlink, result_summary_short)
+                article_result = InlineQueryResultArticle(
+                    id=uuid4(),
+                    title=wiki.title,
+                    thumb_url=wiki.url,
+                    description=result_summary_short,
+                    input_message_content=InputTextMessageContent(response, ParseMode.HTML)
+                )
+                results.append(article_result)
+        except Exception as e:
+            response = TEXT[lang]['KNOW_RESPONSE_NO_INFO']
+            article_result = InlineQueryResultArticle(
+                id=uuid4(),
+                title=query,
+                description=response,
+                input_message_content=InputTextMessageContent(response, ParseMode.HTML)
+            )
+            results.append(article_result)
+        if results:
+            update.inline_query.answer(results)
 
 ####################################################################################################
 
@@ -455,6 +559,8 @@ def main():
     dp.add_handler(CommandHandler("knowall", cmd_knowall, pass_args=True))
     dp.add_handler(CommandHandler("version", cmd_version))
     dp.add_handler(CommandHandler("about", cmd_about))
+    # Set the Inline request handler into the dispatcher
+    dp.add_handler(InlineQueryHandler(inlinequery))
     # Start the Bot polling ignoring pending messages (clean=True)
     updater.start_polling(clean=True)
     # Handle self-messages delete
